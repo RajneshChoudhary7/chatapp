@@ -2,8 +2,8 @@ import mongoose from 'mongoose'
 
 const connectDb = async () =>{
     try {
-        await mongoose.connect(process.env.mongo_con)
-        console.log("Database connect ho gya h chatapp ka ")
+        await mongoose.connect(process.env.MONGO_CON)
+        
     } catch (error) {
         console.log("database connection error" + error)
     }
