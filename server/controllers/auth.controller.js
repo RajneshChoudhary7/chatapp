@@ -5,13 +5,19 @@ import getToken from "../utils/token.js";
 
 export const signup = async (req,res)=>{
     const {name , email , password} = req.body
+    console.log('====================================');
+    console.log(name,email,password,"he");
+    console.log('====================================');
     try {
         const existringUser = await User.findOne({email})
+        console.log('====================================');
+        console.log(existringUser,"exitttt");
+        console.log('====================================');
         if(existringUser) return res.status(400).json({message:"user already exists"})
 
             const hashedPassword = await bcrypt.hash(password,10)
             const newUser = await User.create({name,email,password:hashedPassword})
-
+                    
             const token = await getToken(newUser._id)
             res.cookie("token",token,{
             secure:false,

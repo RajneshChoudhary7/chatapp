@@ -1,15 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { Send } from "lucide-react";
-import socket from "../utils/socket"; // ✅ socket.js import
+import axios from "axios";
+import socket from "../utils/socket";
 
 const Home = () => {
   const [message, setMessage] = useState("");
   const [allMessages, setAllMessages] = useState([]);
 
-  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [users, setUsers] = useState([]); // ✅ All DB Users
+  const [onlineUsers, setOnlineUsers] = useState([]); // ✅ Online Users
   const [currentUser, setCurrentUser] = useState("");
 
-  // ✅ On Page Load: Join User + Listen Events
+  // ✅ Fetch Users From Database
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/users/all",
+        {
+          withCredentials: true,
+        }
+      );
+
+      setUsers(res.data);
+    } catch (error) {
+      console.log("Error fetching users:", error.message);
+    }
+  };
+
+  // ✅ On Page Load
   useEffect(() => {
     // Get logged-in user from localStorage
     const user = JSON.parse(localStorage.getItem("user"));
@@ -17,11 +35,14 @@ const Home = () => {
     if (user) {
       setCurrentUser(user.name);
 
-      // Tell server user is online
+      // Join Socket Server
       socket.emit("joinUser", user.name);
     }
 
-    // Receive Online Users List
+    // Fetch Users List
+    fetchUsers();
+
+    // Receive Online Users
     socket.on("onlineUsers", (users) => {
       setOnlineUsers(users);
     });
@@ -49,37 +70,44 @@ const Home = () => {
 
     socket.emit("sendMessage", msgData);
 
+    setAllMessages((prev) => [...prev, msgData]);
     setMessage("");
   };
 
   return (
     <div className="h-screen flex bg-gray-100">
-      {/* ✅ Sidebar */}
+      {/* ✅ Sidebar Users */}
       <div className="w-1/3 bg-white border-r">
-        {/* Sidebar Header */}
-        <div className="p-4 font-bold text-lg border-b">
-          Online Users 🟢
+        {/* Header */}
+        <div className="p-4 font-bold text-lg border-b bg-green-600 text-white">
+          WhatsApp Clone 💬
         </div>
 
-        {/* Online Users List */}
+        {/* Users List */}
         <div className="overflow-y-auto h-full">
-          {onlineUsers.length === 0 ? (
-            <p className="p-4 text-gray-500">No users online</p>
+          {users.length === 0 ? (
+            <p className="p-4 text-gray-500">No users found...</p>
           ) : (
-            onlineUsers.map((user, index) => (
+            users.map((user) => (
               <div
-                key={index}
+                key={user._id}
                 className="flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-200"
               >
                 {/* Avatar */}
                 <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {user[0]}
+                  {user.name[0]}
                 </div>
 
                 {/* User Info */}
                 <div>
-                  <h2 className="font-semibold">{user}</h2>
-                  <p className="text-sm text-green-600">● Online</p>
+                  <h2 className="font-semibold">{user.name}</h2>
+
+                  {/* Online Status */}
+                  {onlineUsers.includes(user.name) ? (
+                    <p className="text-sm text-green-600">● Online</p>
+                  ) : (
+                    <p className="text-sm text-gray-400">● Offline</p>
+                  )}
                 </div>
               </div>
             ))
@@ -92,7 +120,7 @@ const Home = () => {
         {/* Chat Header */}
         <div className="p-4 bg-green-600 text-white font-semibold flex justify-between">
           <span>Welcome, {currentUser}</span>
-          <span className="text-sm">🟢 Online</span>
+          <span className="text-sm">🟢 Connected</span>
         </div>
 
         {/* Messages Area */}

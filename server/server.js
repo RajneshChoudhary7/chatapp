@@ -6,12 +6,14 @@ import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
 import socketHandler from "./utils/socket.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
 const app = express();
 
 // Middleware
+app.use(cookieParser())
 app.use(express.json());
 app.use(cors({
   origin: "http://localhost:5173",
