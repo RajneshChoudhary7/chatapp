@@ -2,42 +2,45 @@ import User from "../models/user.model.js";
 import bcrypt from 'bcrypt'
 import getToken from "../utils/token.js";
 
+export const signup = async (req, res) => {
+  const { name, email, password } = req.body;
 
-export const signup = async (req,res)=>{
-    const {name , email , password} = req.body
-    console.log('====================================');
-    console.log(name,email,password,"he");
-    console.log('====================================');
-    try {
-        const existringUser = await User.findOne({email})
-        console.log('====================================');
-        console.log(existringUser,"exitttt");
-        console.log('====================================');
-        if(existringUser) return res.status(400).json({message:"user already exists"})
+  try {
+    const existingUser = await User.findOne({ email });
 
-            const hashedPassword = await bcrypt.hash(password,10)
-            const newUser = await User.create({name,email,password:hashedPassword})
-                    
-            const token = await getToken(newUser._id)
-            res.cookie("token",token,{
-            secure:false,
-            sameSite:"strict",
-            maxAge:7*24*60*60*1000,
-            httpOnly:true
-        })
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists" });
 
-            res.status(201).json({message:`User Registered Successfully`,user: {
-                id: newUser._id,
-                name: newUser.name,
-                email: newUser.email
-                        }})
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create new user
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
 
-    } catch (error) {
-        res.status(500).json({message:"Sigup controller error "})
+    // ✅ Token should be generated from newUser._id
+    const token = getToken(newUser._id);
 
-    }
-}
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(201).json({
+      message: "User Registered Successfully",
+      user: newUser,
+      token,
+    });
+  } catch (error) {
+    console.log("Signup Error:", error);
+    res.status(500).json({ message: "Signup controller error" });
+  }
+};
 
 export const login = async (req,res)=>{
     const {email , password} = req.body
