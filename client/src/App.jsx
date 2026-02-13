@@ -6,7 +6,7 @@ import Home from './components/Home'
 
 const App = () => {
   return (
-    <div className='flex items-center justify-center mt-24'>
+    <div className=''>
     <Routes>
         <Route path='/login' element={<Login/>} />
         <Route path='/' element={<Signup/>} />

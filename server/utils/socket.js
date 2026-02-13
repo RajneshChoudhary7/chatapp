@@ -1,27 +1,53 @@
+import User from "../models/user.model.js";
+
 let onlineUsers = {};
 
 const socketHandler = (io) => {
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
 
-    // Join user
-    socket.on("joinUser", (username) => {
-      onlineUsers[socket.id] = username;
+    console.log("User Connected:", socket.id);
 
-      io.emit("onlineUsers", Object.values(onlineUsers));
+    //  User joins
+    socket.on("joinUser", async (userId) => {
+
+      onlineUsers[userId] = socket.id;
+
+      // Update DB
+      await User.findByIdAndUpdate(userId, {
+        isOnline: true,
+      });
+
+      // Send online users list
+      io.emit("onlineUsers", Object.keys(onlineUsers));
     });
 
-    // Send Message
-    socket.on("sendMessage", (data) => {
-      io.emit("receiveMessage", data);
-    });
+    //  Disconnect
+    socket.on("disconnect", async () => {
 
-    // Disconnect
-    socket.on("disconnect", () => {
-      delete onlineUsers[socket.id];
+      const userId = onlineUsers[socket.id];
 
-      io.emit("onlineUsers", Object.values(onlineUsers));
-      console.log("User disconnected");
+      if (userId) {
+
+        const lastSeenTime = new Date();
+
+        // Update DB offline + lastSeen
+        await User.findByIdAndUpdate(userId, {
+          isOnline: false,
+          lastSeen: lastSeenTime,
+        });
+
+        // ❗ Emit lastSeen event
+        io.emit("lastSeen", {
+          userId,
+          lastSeen: lastSeenTime,
+        });
+
+        if (userId) delete onlineUsers[userId];
+
+        io.emit("onlineUsers", Object.keys(onlineUsers));
+
+        console.log("User disconnected:", userId);
+      }
     });
   });
 };

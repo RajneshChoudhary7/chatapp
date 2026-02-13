@@ -1,5 +1,5 @@
 import User from "../models/user.model.js";
-import bcrypt from 'bcrypt'
+import bcrypt from "bcrypt";
 import getToken from "../utils/token.js";
 
 export const signup = async (req, res) => {
@@ -42,30 +42,35 @@ export const signup = async (req, res) => {
   }
 };
 
-export const login = async (req,res)=>{
-    const {email , password} = req.body
-    
-    try{
-        const user = await User.findOne({email})
-        if(!user) return res.status(404).json({message:'user not found '})
+export const login = async (req, res) => {
+  const { email, password } = req.body;
 
-            const isMatch = await bcrypt.compare(password , user.password)
-            if(!isMatch) return res.status(400).json({message:'Invalid Credentials'})
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "user not found " });
 
-                const token = await getToken(user._id)
-                res.cookie("token",token,{
-                secure:false,
-                sameSite:"strict",
-                maxAge:7*24*60*60*1000,
-                httpOnly:true
-                })
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid Credentials" });
 
-                res.json({message:'login Sccessful',token})
-                
+    const token = await getToken(user._id);
+    res.cookie("token", token, {
+      secure: false,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+    });
 
-
-    }
-    catch (error){
-        res.status(500).json({message:error.message})
-    }
-}
+    res.json({
+      message: "Login Successful",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

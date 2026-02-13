@@ -4,8 +4,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: start;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #c2e9fb, #a1c4fd);
+  min-height: 00vh;
   font-family: 'Poppins', sans-serif;
   padding-top: 50px;
 }
@@ -19,7 +18,6 @@
 
 /* Form box */
 .form-box {
-  background-color: white;
   padding: 30px;
   border-radius: 15px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);

@@ -44,9 +44,15 @@ const Home = () => {
     if (!currentUser) return;
     
     try {
+      const token = localStorage.getItem("token");
       const res = await axios.get(
         `http://localhost:5000/api/messages/conversations/${currentUser._id}`,
-        { withCredentials: true }
+        { withCredentials: true ,
+              headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        },
+        
       );
       setConversations(res.data);
     } catch (error) {
@@ -57,12 +63,31 @@ const Home = () => {
   // Fetch users from DB
   const fetchUsers = async () => {
     try {
+      const token = localStorage.getItem("token");
+
       const res = await axios.get("http://localhost:5000/api/users/all", {
         withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+      console.log("Users API Response:", res.data);
+      console.log("CurrentUser:", currentUser);
+
       // Filter out current user
-      const otherUsers = res.data.filter(user => user._id !== currentUser?._id);
+      if (!currentUser) return;
+      const otherUsers = res.data.filter(
+      (user) => user._id !== currentUser._id
+        );
       setUsers(otherUsers);
+
+      // Fill lastSeen state
+        const lastSeenMap = {};
+        res.data.forEach(user => {
+            lastSeenMap[user._id] = user.lastSeen;
+            });
+
+            setUserLastSeen(lastSeenMap);
     } catch (error) {
       console.log("Error fetching users:", error.message);
     }
@@ -99,6 +124,7 @@ const Home = () => {
   // On page load
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
+    console.log("Current User Loaded:", user);
     if (user) {
       setCurrentUser(user);
       socket.emit("joinUser", user._id);
@@ -210,6 +236,11 @@ const Home = () => {
       status: "sent"
     };
 
+      console.log("currentUser:", currentUser);
+      console.log("selectedUser:", selectedUser);
+      console.log("message:", message);
+
+
     try {
       const res = await axios.post(
         "http://localhost:5000/api/messages/send",
@@ -264,31 +295,44 @@ const Home = () => {
 
   // Format last seen
   const formatLastSeen = (lastSeen) => {
-    if (!lastSeen) return "last seen recently";
-    
-    const now = new Date();
-    const lastSeenDate = new Date(lastSeen);
-    const diffMinutes = Math.floor((now - lastSeenDate) / 60000);
-    
-    if (diffMinutes < 1) return "last seen just now";
-    if (diffMinutes < 60) return `last seen ${diffMinutes} min ago`;
-    if (diffMinutes < 120) return "last seen 1 hour ago";
-    if (diffMinutes < 1440) return `last seen ${Math.floor(diffMinutes / 60)} hours ago`;
-    
-    return lastSeenDate.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  };
+  if (!lastSeen) return "last seen recently";
+
+  const lastSeenDate = new Date(lastSeen);
+
+  // ✅ Invalid Date check
+  if (isNaN(lastSeenDate.getTime())) {
+    return "last seen recently";
+  }
+
+  const now = new Date();
+  const diffMinutes = Math.floor((now - lastSeenDate) / 60000);
+
+  if (diffMinutes < 1) return "last seen just now";
+  if (diffMinutes < 60) return `last seen ${diffMinutes} min ago`;
+  if (diffMinutes < 120) return "last seen 1 hour ago";
+  if (diffMinutes < 1440)
+    return `last seen ${Math.floor(diffMinutes / 60)} hours ago`;
+
+  return lastSeenDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
 
   // Get last message from conversation
-  const getLastMessage = (userId) => {
-    const conv = conversations.find(c => c.userId === userId);
-    if (!conv?.lastMessage) return "No messages yet";
-    
-    const text = conv.lastMessage.text;
-    return text.length > 30 ? text.substring(0, 30) + '...' : text;
-  };
+const getLastMessage = (userId) => {
+  const conv = conversations.find(c => c.userId === userId);
+
+  if (!conv?.lastMessage?.text) return "No messages yet";
+
+  const text = conv.lastMessage.text;
+
+  return text.length > 30
+    ? text.substring(0, 30) + "..."
+    : text;
+};
+
 
   // Get unread count
   const getUnreadCount = (userId) => {
@@ -296,7 +340,7 @@ const Home = () => {
   };
 
   return (
-    <div className="h-screen flex bg-[#f0f2f5] font-sans overflow-hidden">
+    <div className="h-screen w-screen flex bg-[#f0f2f5] font-sans overflow-hidden m-0 p-0">
       {/* Left Sidebar - 30% */}
       <div className="w-[30%] flex flex-col bg-white border-r border-gray-200">
         {/* Sidebar Header */}

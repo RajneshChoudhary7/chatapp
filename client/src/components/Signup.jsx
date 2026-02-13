@@ -41,10 +41,10 @@ function Signup() {
   }
 
   return (
-    <div className="form-container">
+    <div className="form-container bg-green-500">
       <h1 className="form-title">User Registration</h1>
 
-      <div className="form-box">
+      <div className="form-box bg-green-200 ">
         <input
           type="text"
           name="name"

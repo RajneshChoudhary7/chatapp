@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import axios from 'axios'; // ✅ Import axios
-import './Login2.css';
+import React, { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import axios from "axios"; // ✅ Import axios
+import "./Login2.css";
 
 function Login() {
   const [input, setInput] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   const navigate = useNavigate();
   function handleChange(e) {
@@ -17,34 +17,41 @@ function Login() {
   }
 
   async function handleLogin() {
-    setMessage('');
+    setMessage("");
 
     const { email, password } = input;
     if (email && password) {
       try {
         console.log("🔹 Data going to backend:", input);
 
-        const res = await axios.post("http://localhost:5000/api/users/login", input);
+        const res = await axios.post(
+          "http://localhost:5000/api/users/login",
+          input,
+        );
 
         console.log("✅ Server Response:", res.data);
 
         // assuming backend sends a token or success flag
         if (res.data.token) {
-          setMessage('✅ Login Successful!');
-          localStorage.setItem('token', res.data.token); // store token
-          setInput({ email: '', password: '' });
+          setMessage("✅ Login Successful!");
+
+          // ✅ Save token
+          localStorage.setItem("token", res.data.token);
+
+          // ✅ Save user also
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+
+          setInput({ email: "", password: "" });
 
           setTimeout(() => {
-            navigate('/home')
-          },  1000);
-          
+            navigate("/home");
+          }, 1000);
         } else {
-          setMessage('❌ Invalid Email or Password');
+          setMessage("❌ Invalid Email or Password");
         }
-
       } catch (error) {
         console.error("🚨 Login Error:", error);
-        setMessage('❌ Server Error or Invalid Credentials');
+        setMessage("❌ Server Error or Invalid Credentials");
       }
     } else {
       alert("⚠️ Please fill all fields!");
@@ -52,10 +59,10 @@ function Login() {
   }
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">Login</h1>
+    <div className="form-container bg-green-500">
+      <h1 className="form-title bg-green-200">Login</h1>
 
-      <div className="form-box">
+      <div className="form-box bg-green-200">
         <input
           type="email"
           name="email"
@@ -77,7 +84,9 @@ function Login() {
         </Link>
 
         {message && (
-          <p className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
+          <p
+            className={`message ${message.includes("✅") ? "success" : "error"}`}
+          >
             {message}
           </p>
         )}

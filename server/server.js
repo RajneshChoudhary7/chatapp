@@ -7,6 +7,7 @@ import http from "http";
 import { Server } from "socket.io";
 import socketHandler from "./utils/socket.js";
 import cookieParser from "cookie-parser";
+import messageRoutes from "./routes/message.routes.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(cors({
 
 // Routes
 app.use("/api/users", userRouters);
+app.use("/api/messages",messageRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server is running...");
