@@ -8,6 +8,7 @@ import { Server } from "socket.io";
 import socketHandler from "./utils/socket.js";
 import cookieParser from "cookie-parser";
 import messageRoutes from "./routes/message.routes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 
 dotenv.config();
 
@@ -24,6 +25,8 @@ app.use(cors({
 // Routes
 app.use("/api/users", userRouters);
 app.use("/api/messages",messageRoutes);
+app.use("/uploads",express.static("uploads"))
+app.use("/api/upload" , uploadRoutes)
 
 app.get("/", (req, res) => {
   res.send("Server is running...");
